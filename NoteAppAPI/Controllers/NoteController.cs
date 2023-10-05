@@ -13,13 +13,16 @@ namespace NoteAppAPI.Controllers
         private readonly NoteAppDBContext _context;
         private readonly IMapper _mapper;
 
-
         public NoteController(NoteAppDBContext context,IMapper
         mapper)
         {
             _context = context;
             _mapper = mapper;
         }
+
+
+
+        // -----Endpoints-----
 
         // GET: api/Note
         [HttpGet]
@@ -33,7 +36,7 @@ namespace NoteAppAPI.Controllers
             return await _context.Notes.ToListAsync();
         }
 
-        // GET: api/Note/5
+        // GET: api/Note/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<Note>> GetNote(int id)
         {
@@ -49,25 +52,7 @@ namespace NoteAppAPI.Controllers
             }
         }
 
-        private async Task<Note> GetNoteByID(int id)
-        {  
-            if (_context.Notes == null)
-            {
-                throw new Exception("Error retrieving note");
-            }
-
-            var note = await _context.Notes.FindAsync(id);
-
-            if (note == null)
-            {
-                throw new Exception("Error retrieving note");
-            }
-
-            return note;
-        }
-
-        // PUT: api/Note/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // PUT: api/Note/{id}
         [HttpPut("{id}")]
         public async Task<ActionResult<Note>> PutNote(int id, NoteDto note)
         {
@@ -92,7 +77,6 @@ namespace NoteAppAPI.Controllers
         }
 
         // POST: api/Note
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Note>> PostNote(NoteDto note)
         {
@@ -106,7 +90,7 @@ namespace NoteAppAPI.Controllers
             return CreatedAtAction(nameof(GetNote), new { id = noteToCreate.Id }, noteToCreate);
         }
 
-        // DELETE: api/Note/5
+        // DELETE: api/Note/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteNote(int id)
         {
@@ -126,6 +110,29 @@ namespace NoteAppAPI.Controllers
             return Ok();
         }
 
+
+
+        //-----Helper functions-----
+
+        //Retrieve note by ID
+        private async Task<Note> GetNoteByID(int id)
+        {  
+            if (_context.Notes == null)
+            {
+                throw new Exception("Error retrieving note");
+            }
+
+            var note = await _context.Notes.FindAsync(id);
+
+            if (note == null)
+            {
+                throw new Exception("Error retrieving note");
+            }
+
+            return note;
+        }
+        
+        //Check if note exists
         private bool NoteExists(int id)
         {
             return (_context.Notes?.Any(e => e.Id == id)).GetValueOrDefault();
