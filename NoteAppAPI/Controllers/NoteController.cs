@@ -115,7 +115,7 @@ namespace NoteAppAPI.Controllers
         //-----Helper functions-----
 
         //Retrieve note by ID
-        private async Task<Note> GetNoteByID(int id)
+        public async Task<Note> GetNoteByID(int id)
         {  
             if (_context.Notes == null)
             {

@@ -110,7 +110,7 @@ namespace NoteAppAPI.Controllers
         //-----Helper functions-----
 
         //Retrieve user by id
-        private async Task<User> GetUserByID(int id)
+        public async Task<User> GetUserByID(int id)
         {  
             if (_context.Users == null)
             {
