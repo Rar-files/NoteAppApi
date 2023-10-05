@@ -45,7 +45,6 @@ namespace NoteAppAPI.Controllers
             }
             catch (Exception)
             {
-                
                 return NotFound();
             }
         }
