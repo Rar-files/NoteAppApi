@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using NoteAppAPI.Models;
 
 namespace NoteAppAPI.Models;
 
@@ -18,4 +19,6 @@ public class NoteAppDBContext : DbContext
     }
 
     public DbSet<Note> Notes { get; set; } = null!;
+
+    public DbSet<User> Users { get; set; } = default!;
 }
