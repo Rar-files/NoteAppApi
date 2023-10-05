@@ -1,4 +1,7 @@
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
+
+using NoteAppAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +10,9 @@ builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddDbContext<NoteAppDBContext>(opt =>
+    opt.UseInMemoryDatabase("NoteApp"));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(config =>{
     config.SwaggerDoc("v1", new OpenApiInfo{ Title = "NoteAppAPI", Version = "v1", Description = "" });
