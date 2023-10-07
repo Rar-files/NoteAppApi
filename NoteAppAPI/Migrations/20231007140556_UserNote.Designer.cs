@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NoteAppAPI.Migrations
 {
     [DbContext(typeof(NoteAppDBContext))]
-    [Migration("20231005161446_UserNote")]
+    [Migration("20231007140556_UserNote")]
     partial class UserNote
     {
         /// <inheritdoc />

@@ -1,5 +1,8 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoteAppAPI.Dtos;
+using NoteAppAPI.Helpers;
 using NoteAppAPI.Models;
 
 namespace NoteAppAPI.Controllers;
@@ -14,10 +17,6 @@ public class UserNoteController : ControllerBase
     {
         _context = context;
     }
-    
-
-
-    //-----Endpoints-----
 
     // GET: api/UserNote
     [HttpGet]
@@ -27,7 +26,10 @@ public class UserNoteController : ControllerBase
         {
             return NotFound();
         }
-        return await _context.UserNotes.ToListAsync();
+        return await _context.UserNotes
+            .Include(n => n.User)
+            .Include(n => n.Note)
+            .ToListAsync();
     }
 
     [HttpGet("{id}")]
@@ -35,7 +37,7 @@ public class UserNoteController : ControllerBase
     {
         try
         {
-            var userNote = await GetUserNoteById(id);
+            var userNote = await UserNoteHelpers.GetByID(id, _context);
             return userNote;
         }
         catch (Exception)
@@ -44,25 +46,78 @@ public class UserNoteController : ControllerBase
         }
     }
 
-
-
-    //-----Helper functions-----
-    
-    //Retrive user note by id
-    public async Task<UserNote> GetUserNoteById(int id)
+    // PUT: api/UserNote/{id}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutUserNote(int id, UserNoteDto userNoteDto)
     {
-        if(_context.UserNotes == null)
+        User user;
+        try
         {
-            throw new Exception("Error retrieving user note");
+            user = await UserHelpers.GetByID(userNoteDto.UserId, _context);
+        }
+        catch (Exception)
+        {
+            return NotFound("User not found");
         }
 
-        var userNote = await _context.UserNotes.FindAsync(id);
-
-        if(userNote == null)
+        Note note;
+        try
         {
-            throw new Exception("Error retrieving user note");
+            note = await NoteHelpers.GetByID(userNoteDto.NoteId, _context);
+        }
+        catch (Exception)
+        {
+            return NotFound("Note not found");
         }
 
-        return userNote;
+        UserNote userNoteToUpdate;
+        try
+        {
+            userNoteToUpdate = await UserNoteHelpers.GetByID(id, _context);
+        }
+        catch (Exception)
+        {
+            return NotFound("User note not found");
+        }
+
+        userNoteToUpdate.Note = note;
+        userNoteToUpdate.User = user;
+
+        _context.Entry(userNoteToUpdate).State = EntityState.Modified;
+        await _context.SaveChangesAsync();
+
+        return Ok(userNoteToUpdate);
+    }
+
+    // POST: api/UserNote
+    [HttpPost]
+    public async Task<ActionResult<UserNote>> PostUserNote(UserNoteDto userNoteDto)
+    {
+        User user;
+        try
+        {
+            user = await UserHelpers.GetByID(userNoteDto.UserId, _context);
+        }
+        catch (Exception)
+        {
+            return NotFound("User not found");
+        }
+
+        Note note;
+        try
+        {
+            note = await NoteHelpers.GetByID(userNoteDto.NoteId, _context);
+        }
+        catch (Exception)
+        {
+            return NotFound("Note not found");
+        }
+
+        var userNote = new UserNote(){ Note = note, User = user };
+        _context.Add(userNote);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction("GetUserNote", new { id = userNote.Id }, userNote);
+
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using NoteAppAPI.Models;
 using NoteAppAPI.Dtos;
 using AutoMapper;
+using NoteAppAPI.Helpers;
 
 namespace NoteAppAPI.Controllers
 {
@@ -19,10 +20,6 @@ namespace NoteAppAPI.Controllers
             _context = context;
             _mapper = mapper;
         }
-
-
-
-        // -----Endpoints-----
 
         // GET: api/Note
         [HttpGet]
@@ -42,7 +39,7 @@ namespace NoteAppAPI.Controllers
         {
             try
             {
-                var note = await GetNoteByID(id);
+                var note = await NoteHelpers.GetByID(id, _context);
                 return note;
             }
             catch (Exception)
@@ -59,7 +56,7 @@ namespace NoteAppAPI.Controllers
             Note noteToUpdate;
             try
             {
-                noteToUpdate = await GetNoteByID(id);
+                noteToUpdate = await NoteHelpers.GetByID(id, _context);
             }
             catch (Exception)
             {
@@ -97,7 +94,7 @@ namespace NoteAppAPI.Controllers
             Note noteToDelete;
             try
             {
-                noteToDelete = await GetNoteByID(id);
+                noteToDelete = await NoteHelpers.GetByID(id, _context);
             }
             catch (Exception)
             {
@@ -108,34 +105,6 @@ namespace NoteAppAPI.Controllers
             await _context.SaveChangesAsync();
 
             return Ok();
-        }
-
-
-
-        //-----Helper functions-----
-
-        //Retrieve note by ID
-        public async Task<Note> GetNoteByID(int id)
-        {  
-            if (_context.Notes == null)
-            {
-                throw new Exception("Error retrieving note");
-            }
-
-            var note = await _context.Notes.FindAsync(id);
-
-            if (note == null)
-            {
-                throw new Exception("Error retrieving note");
-            }
-
-            return note;
-        }
-        
-        //Check if note exists
-        private bool NoteExists(int id)
-        {
-            return (_context.Notes?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoteAppAPI.Dtos;
 using NoteAppAPI.Models;
+using NoteAppAPI.Helpers;
 
 namespace NoteAppAPI.Controllers
 {
@@ -18,10 +19,6 @@ namespace NoteAppAPI.Controllers
             _context = context;
             _mapper = mapper;
         }
-
-
-
-        // -----Endpoints-----
 
         // GET: api/User
         [HttpGet]
@@ -40,7 +37,7 @@ namespace NoteAppAPI.Controllers
         {   
             try
             {
-                var user = await GetUserByID(id);
+                var user = await UserHelpers.GetByID(id, _context);
                 return user;
             }
             catch (Exception)
@@ -56,7 +53,7 @@ namespace NoteAppAPI.Controllers
             User userToUpdate;
             try
             {
-                userToUpdate = await GetUserByID(id);
+                userToUpdate = await UserHelpers.GetByID(id, _context);
             }
             catch (Exception)
             {
@@ -91,7 +88,7 @@ namespace NoteAppAPI.Controllers
             User userToDelete;
             try
             {
-                userToDelete = await GetUserByID(id);
+                userToDelete = await UserHelpers.GetByID(id, _context);
             }
             catch (Exception)
             {
@@ -102,34 +99,6 @@ namespace NoteAppAPI.Controllers
             await _context.SaveChangesAsync();
 
             return Ok();
-        }
-
-
-
-        //-----Helper functions-----
-
-        //Retrieve user by id
-        public async Task<User> GetUserByID(int id)
-        {  
-            if (_context.Users == null)
-            {
-                throw new Exception("Error retrieving user");
-            }
-
-            var user = await _context.Users.FindAsync(id);
-
-            if (user == null)
-            {
-                throw new Exception("Error retrieving user");
-            }
-
-            return user;
-        }
-
-        //Check if user exists
-        private bool UserExists(int id)
-        {
-            return (_context.Users?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
