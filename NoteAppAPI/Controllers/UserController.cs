@@ -26,7 +26,7 @@ namespace NoteAppAPI.Controllers
         {
             if (_context.Users == null)
             {
-                return NotFound();
+                return NotFound("Users not found");
             }
             return await _context.Users.ToListAsync();
         }
@@ -42,7 +42,7 @@ namespace NoteAppAPI.Controllers
             }
             catch (Exception)
             {
-                return NotFound();
+                return NotFound("User not found");
             }
         }
 
@@ -57,7 +57,7 @@ namespace NoteAppAPI.Controllers
             }
             catch (Exception)
             {
-                return NotFound();
+                return NotFound("User not found");
             }
 
             userToUpdate = _mapper.Map<UserDto, User>(user, userToUpdate);
@@ -92,7 +92,7 @@ namespace NoteAppAPI.Controllers
             }
             catch (Exception)
             {
-                return NotFound();
+                return NotFound("User not found");
             }
 
             _context.Users.Remove(userToDelete);

@@ -120,4 +120,23 @@ public class UserNoteController : ControllerBase
         return CreatedAtAction("GetUserNote", new { id = userNote.Id }, userNote);
 
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteUserNote(int id)
+    {
+        UserNote userNoteToUpdate;
+        try
+        {
+            userNoteToUpdate = await UserNoteHelpers.GetByID(id, _context);
+        }
+        catch (Exception)
+        {
+            return NotFound("User note not found");
+        }
+
+        _context.UserNotes.Remove(userNoteToUpdate);
+        await _context.SaveChangesAsync();
+        
+        return Ok();
+    }
 }
