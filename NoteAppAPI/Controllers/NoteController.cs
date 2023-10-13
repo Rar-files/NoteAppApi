@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using NoteAppAPI.Models;
 using NoteAppAPI.Dtos;
 using AutoMapper;
+using NoteAppAPI.Helpers;
 
 namespace NoteAppAPI.Controllers
 {
@@ -20,17 +21,13 @@ namespace NoteAppAPI.Controllers
             _mapper = mapper;
         }
 
-
-
-        // -----Endpoints-----
-
         // GET: api/Note
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Note>>> GetNotes()
         {
             if (_context.Notes == null)
             {
-                return NotFound();
+                return NotFound("Note not found");
             }
 
             return await _context.Notes.ToListAsync();
@@ -42,13 +39,13 @@ namespace NoteAppAPI.Controllers
         {
             try
             {
-                var note = await GetNoteByID(id);
+                var note = await NoteHelpers.GetByID(id, _context);
                 return note;
             }
             catch (Exception)
             {
                 
-                return NotFound();
+                return NotFound("Note not found");
             }
         }
 
@@ -59,12 +56,12 @@ namespace NoteAppAPI.Controllers
             Note noteToUpdate;
             try
             {
-                noteToUpdate = await GetNoteByID(id);
+                noteToUpdate = await NoteHelpers.GetByID(id, _context);
             }
             catch (Exception)
             {
                 
-                return NotFound();
+                return NotFound("Note not found");
             }
 
             noteToUpdate = _mapper.Map<NoteDto, Note>(note, noteToUpdate);
@@ -97,45 +94,17 @@ namespace NoteAppAPI.Controllers
             Note noteToDelete;
             try
             {
-                noteToDelete = await GetNoteByID(id);
+                noteToDelete = await NoteHelpers.GetByID(id, _context);
             }
             catch (Exception)
             {
-                return NotFound();
+                return NotFound("Note not found");
             }
 
             _context.Notes.Remove(noteToDelete);
             await _context.SaveChangesAsync();
 
             return Ok();
-        }
-
-
-
-        //-----Helper functions-----
-
-        //Retrieve note by ID
-        private async Task<Note> GetNoteByID(int id)
-        {  
-            if (_context.Notes == null)
-            {
-                throw new Exception("Error retrieving note");
-            }
-
-            var note = await _context.Notes.FindAsync(id);
-
-            if (note == null)
-            {
-                throw new Exception("Error retrieving note");
-            }
-
-            return note;
-        }
-        
-        //Check if note exists
-        private bool NoteExists(int id)
-        {
-            return (_context.Notes?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
