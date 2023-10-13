@@ -27,7 +27,7 @@ namespace NoteAppAPI.Controllers
         {
             if (_context.Notes == null)
             {
-                return NotFound();
+                return NotFound("Note not found");
             }
 
             return await _context.Notes.ToListAsync();
@@ -45,7 +45,7 @@ namespace NoteAppAPI.Controllers
             catch (Exception)
             {
                 
-                return NotFound();
+                return NotFound("Note not found");
             }
         }
 
@@ -61,7 +61,7 @@ namespace NoteAppAPI.Controllers
             catch (Exception)
             {
                 
-                return NotFound();
+                return NotFound("Note not found");
             }
 
             noteToUpdate = _mapper.Map<NoteDto, Note>(note, noteToUpdate);
@@ -98,7 +98,7 @@ namespace NoteAppAPI.Controllers
             }
             catch (Exception)
             {
-                return NotFound();
+                return NotFound("Note not found");
             }
 
             _context.Notes.Remove(noteToDelete);
