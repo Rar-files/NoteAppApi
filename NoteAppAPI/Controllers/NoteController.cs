@@ -78,8 +78,9 @@ namespace NoteAppAPI.Controllers
         public async Task<ActionResult<Note>> PostNote(NoteDto note)
         {
             var noteToCreate = _mapper.Map<Note>(note);
-            noteToCreate.CreatedAt = DateTime.UtcNow;
-            noteToCreate.UpdatedAt = DateTime.UtcNow;
+            var actualTime = DateTime.UtcNow;
+            noteToCreate.CreatedAt = actualTime;
+            noteToCreate.UpdatedAt = actualTime;
             
             _context.Notes.Add(noteToCreate);
             await _context.SaveChangesAsync();

@@ -68,19 +68,6 @@ namespace NoteAppAPI.Controllers
             return Ok(userToUpdate);
         }
 
-        // POST: api/User
-        [HttpPost]
-        public async Task<ActionResult<User>> PostUser(UserDto user)
-        {
-            var userToCreate = _mapper.Map<User>(user);
-            userToCreate.RegistrationDate = DateTime.UtcNow;
-
-            _context.Users.Add(userToCreate);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetUser), new { id = userToCreate.Id }, userToCreate);
-        }
-
         // DELETE: api/User/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
