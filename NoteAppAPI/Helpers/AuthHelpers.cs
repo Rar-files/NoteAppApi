@@ -44,7 +44,7 @@ public class AuthHelpers {
         throw new Exception("Invalid Google OAuth Token");
     }
 
-    public static async Task<User> AuthenticateByLocalAuth(UserDto user, NoteAppDBContext _context){
+    public static async Task<User> AuthenticateByLocalAuth(UserDtoShorted user, NoteAppDBContext _context){
         var currentUser = await _context.Users.FirstOrDefaultAsync(u => 
         u.Email.ToLower() == user.Email.ToLower());
 

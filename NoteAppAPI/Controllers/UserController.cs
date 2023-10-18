@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using NoteAppAPI.Dtos;
 using NoteAppAPI.Models;
 using NoteAppAPI.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace NoteAppAPI.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase

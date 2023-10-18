@@ -4,9 +4,11 @@ using NoteAppAPI.Models;
 using NoteAppAPI.Dtos;
 using AutoMapper;
 using NoteAppAPI.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace NoteAppAPI.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class NoteController : ControllerBase

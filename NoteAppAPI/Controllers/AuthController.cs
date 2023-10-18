@@ -49,14 +49,14 @@ public class AuthController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("Local/Login")]
-    public async Task<IActionResult> LoginLocalLogin(UserDto userDto)
+    public async Task<IActionResult> LoginLocalLogin(UserDtoShorted userCred)
     {
-        if(userDto == null)
+        if(userCred == null)
             return BadRequest();
 
         try
         {
-            var authedUser = await AuthHelpers.AuthenticateByLocalAuth(userDto, _context);
+            var authedUser = await AuthHelpers.AuthenticateByLocalAuth(userCred, _context);
             return Ok(AuthHelpers.GenerateToken(authedUser,_config));
         }
         catch (InvalidOperationException)
@@ -94,7 +94,7 @@ public class AuthController : ControllerBase
         _context.Users.Add(userToCreate);
         await _context.SaveChangesAsync();
 
-        var authedUser = await AuthHelpers.AuthenticateByLocalAuth(userDto, _context);
+        var authedUser = await AuthHelpers.AuthenticateByLocalAuth(_mapper.Map<UserDtoShorted>(userToCreate), _context);
         var token = AuthHelpers.GenerateToken(authedUser,_config);
 
         return CreatedAtAction(actionName: nameof(UserController.GetUser), controllerName: nameof(UserController)[0..^10], routeValues: new { id = userToCreate.Id }, value: new{ Token = token, User = userToCreate });
