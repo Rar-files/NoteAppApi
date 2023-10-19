@@ -14,6 +14,7 @@ builder.Configuration.AddEnvironmentVariables();
 // Add services to the container:
 // Add Controllers
 builder.Services.AddControllers();
+
 // Add JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer( o =>
@@ -30,11 +31,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAuthorization();
+
 // Add AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 // Add DB Context
 builder.Services.AddDbContext<NoteAppDBContext>(opt =>
     opt.UseInMemoryDatabase("NoteApp"));
+
 // Add Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(config =>{
