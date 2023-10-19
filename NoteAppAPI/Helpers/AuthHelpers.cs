@@ -11,14 +11,14 @@ public class AuthHelpers {
     public static string GenerateToken(User user, IConfiguration _config) 
     {
         var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            Encoding.UTF8.GetBytes(_config["Auth:Jwt:Key"]));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var claims = new[] {
             new Claim(ClaimTypes.NameIdentifier, user.Email)
         };
         var token = new JwtSecurityToken(
-            _config["Jwt:Issuer"], 
-            _config["Jwt:Issuer"], 
+            _config["Auth:Jwt:Issuer"], 
+            _config["Auth:Jwt:Audience"], 
             claims, 
             expires: DateTime.Now.AddMinutes(15), 
             signingCredentials: creds);

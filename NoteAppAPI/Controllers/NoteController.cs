@@ -77,15 +77,24 @@ namespace NoteAppAPI.Controllers
 
         // POST: api/Note
         [HttpPost]
-        public async Task<ActionResult<Note>> PostNote(NoteDto note)
+        public async Task<ActionResult<Note>> PostNote(NoteDto noteDto)
         {
-            var noteToCreate = _mapper.Map<Note>(note);
+            User owner;
+            try
+            {
+                owner = await UserHelpers.GetByID(noteDto.OwnerId, _context);
+            }
+            catch (Exception)
+            {
+                return NotFound("User not found");
+            }
+            
+            var noteToCreate = _mapper.Map<Note>(noteDto);
             var actualTime = DateTime.UtcNow;
             noteToCreate.CreatedAt = actualTime;
             noteToCreate.UpdatedAt = actualTime;
-            
-            _context.Notes.Add(noteToCreate);
-            await _context.SaveChangesAsync();
+
+            var noteCreated = await NoteHelpers.Create(owner, noteToCreate, _context);
 
             return CreatedAtAction(nameof(GetNote), new { id = noteToCreate.Id }, noteToCreate);
         }

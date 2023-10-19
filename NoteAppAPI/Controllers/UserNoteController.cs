@@ -31,6 +31,7 @@ public class UserNoteController : ControllerBase
         return await _context.UserNotes
             .Include(n => n.User)
             .Include(n => n.Note)
+            .Include(n => n.Role)
             .ToListAsync();
     }
 
@@ -115,9 +116,22 @@ public class UserNoteController : ControllerBase
             return NotFound("Note not found");
         }
 
-        var userNote = new UserNote(){ Note = note, User = user };
-        _context.Add(userNote);
-        await _context.SaveChangesAsync();
+        Role role;
+        try
+        {
+            role = await RoleHelpers.GetByID(userNoteDto.RoleId, _context);
+        }
+        catch (Exception)
+        {
+            return NotFound("Role not found");
+        }
+
+        if(role.NoteId != note.Id)
+        {
+            return BadRequest("Role couldn't assign to this note");
+        }
+
+        var userNote = await UserNoteHelpers.Create(new UserNote(){ Note = note, User = user , Role = role}, _context);
 
         return CreatedAtAction("GetUserNote", new { id = userNote.Id }, userNote);
 

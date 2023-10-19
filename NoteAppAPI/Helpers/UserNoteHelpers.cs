@@ -24,6 +24,12 @@ public static class UserNoteHelpers {
         return userNote;
     }
 
+    public static async Task<UserNote> Create(UserNote userNote, NoteAppDBContext _context){
+        _context.Add(userNote);
+        await _context.SaveChangesAsync();
+        return userNote;
+    }
+
     //Check if user note exists
     public static bool Exists(int id, NoteAppDBContext _context)
     {

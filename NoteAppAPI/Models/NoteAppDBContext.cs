@@ -23,4 +23,6 @@ public class NoteAppDBContext : DbContext
     public DbSet<User> Users { get; set; } = default!;
 
     public DbSet<UserNote> UserNotes { get; set; } = default!;
+
+    public DbSet<Role> Roles { get; set; } = default!;
 }

@@ -3,7 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NoteAppAPI.Models;
 
-public class UserNote{
+public class Role
+{
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
@@ -11,12 +12,8 @@ public class UserNote{
     [ForeignKey("NoteId")]
     public int NoteId { get; set; }
     public required Note Note { get; set; }
-    [Required]
-    [ForeignKey("UserId")]
-    public int UserId { get; set; }
-    public required User User { get; set; }
-    [Required]
-    [ForeignKey("RoleId")]
-    public int RoleId { get; set; }
-    public required Role Role { get; set; }
+    public required string Name { get; set; }
+    public bool Owner {get; set;}
+    public bool Update {get; set;}
+    public bool Delete {get; set;}
 }
