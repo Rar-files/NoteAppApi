@@ -35,6 +35,7 @@ namespace NoteAppAPI.Controllers
                     from un in _context.UserNotes
                     where un.UserId == int.Parse(userId)
                     join notes in _context.Notes on un.NoteId equals notes.Id
+                    orderby notes.Id ascending
                     select notes
                 ).ToListAsync();
             }
@@ -128,23 +129,43 @@ namespace NoteAppAPI.Controllers
         }
 
         // DELETE: api/Note/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteNote(int id)
+        [HttpDelete("{noteId}")]
+        public async Task<IActionResult> DeleteNote(int noteId)
         {
             Note noteToDelete;
-            try
+            Role userRole;
+            var userId = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if(userId is not null)
             {
-                noteToDelete = await NoteHelpers.GetByID(id, _context);
+                try{
+                    var un = await UserNoteHelpers.GetByUserIdAndNoteId(int.Parse(userId),noteId,_context);
+                    noteToDelete = un.Note;
+                    userRole = un.Role;
+                }
+                catch (Exception)
+                {
+                    return NotFound("No note assigned to the user was found with that ID");
+                }
             }
-            catch (Exception)
+            else
+                return BadRequest("Bad JWT claimes");
+            
+            if(userRole.Owner || userRole.Delete)
             {
-                return NotFound("Note not found");
+                var userNotes = _context.UserNotes.Where(un => un.NoteId == noteId);
+                _context.UserNotes.RemoveRange(userNotes);
+                
+                var noteRoles = _context.Roles.Where(r => r.NoteId == noteId);
+                _context.Roles.RemoveRange(noteRoles);
+
+                _context.Notes.Remove(noteToDelete);
+
+                await _context.SaveChangesAsync();
+
+                return Ok();
             }
-
-            _context.Notes.Remove(noteToDelete);
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            else
+                return Unauthorized("Insufficient permissions to delete the note with the provided ID");
         }
     }
 }

@@ -14,6 +14,7 @@ public static class UserNoteHelpers {
         var userNote = await _context.UserNotes
             .Include(u => u.User)
             .Include(n => n.Note)
+            .Include(un => un.Role)
             .FirstAsync(un => un.Id == id);
 
         if (userNote == null)
@@ -32,8 +33,9 @@ public static class UserNoteHelpers {
         }
 
         var userNote = await _context.UserNotes
-            .Include(u => u.User)
-            .Include(n => n.Note)
+            .Include(un => un.User)
+            .Include(un => un.Note)
+            .Include(un => un.Role)
             .FirstAsync(un => un.NoteId == noteId && un.UserId == userId);
 
         if (userNote == null)
