@@ -20,6 +20,32 @@ public static class NoteHelpers {
         return note;
     }
 
+    public static async Task<Note> Create(User owner, Note note, NoteAppDBContext _context)
+    {
+        _context.Notes.Add(note);
+        await _context.SaveChangesAsync();
+
+        var ownerRole = await RoleHelpers.Create(new Role { 
+            Name = "Owner",
+            Note = note,
+            NoteId = note.Id,
+            Owner = true,
+            Update = true,
+            Delete = true
+        }, _context);
+        
+        await UserNoteHelpers.Create(new UserNote {
+            User = owner,
+            UserId = owner.Id,
+            Note = note,
+            NoteId = note.Id,
+            Role = ownerRole,
+            RoleId = ownerRole.Id
+        }, _context);
+        
+        return note;
+    }
+
     //Check if note exists
     public static bool Exists(int id, NoteAppDBContext _context)
     {

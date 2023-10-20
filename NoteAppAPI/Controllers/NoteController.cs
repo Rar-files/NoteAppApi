@@ -4,9 +4,12 @@ using NoteAppAPI.Models;
 using NoteAppAPI.Dtos;
 using AutoMapper;
 using NoteAppAPI.Helpers;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace NoteAppAPI.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class NoteController : ControllerBase
@@ -25,86 +28,144 @@ namespace NoteAppAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Note>>> GetNotes()
         {
-            if (_context.Notes == null)
+            var userId = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if(userId is not null)
             {
-                return NotFound("Note not found");
+                return await (
+                    from un in _context.UserNotes
+                    where un.UserId == int.Parse(userId)
+                    join notes in _context.Notes on un.NoteId equals notes.Id
+                    orderby notes.Id ascending
+                    select notes
+                ).ToListAsync();
             }
-
-            return await _context.Notes.ToListAsync();
+            else
+                return BadRequest("Bad JWT claimes");
         }
 
-        // GET: api/Note/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Note>> GetNote(int id)
+        // GET: api/Note/{noteId}
+        [HttpGet("{noteId}")]
+        public async Task<ActionResult<Note>> GetNote(int noteId)
         {
-            try
+            var userId = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if(userId is not null)
             {
-                var note = await NoteHelpers.GetByID(id, _context);
-                return note;
+                try{
+                    return (await UserNoteHelpers.GetByUserIdAndNoteId(int.Parse(userId),noteId,_context)).Note;
+                }
+                catch (Exception)
+                {
+                    return NotFound("No note assigned to the user was found with that ID");
+                }
             }
-            catch (Exception)
-            {
-                
-                return NotFound("Note not found");
-            }
+            else
+                return BadRequest("Bad JWT claimes");
         }
 
         // PUT: api/Note/{id}
-        [HttpPut("{id}")]
-        public async Task<ActionResult<Note>> PutNote(int id, NoteDto note)
+        [HttpPut("{noteId}")]
+        public async Task<ActionResult<Note>> PutNote(int noteId, NoteDto note)
         {
             Note noteToUpdate;
-            try
+            Role userRole;
+            var userId = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if(userId is not null)
             {
-                noteToUpdate = await NoteHelpers.GetByID(id, _context);
+                try{
+                    var un = await UserNoteHelpers.GetByUserIdAndNoteId(int.Parse(userId),noteId,_context);
+                    noteToUpdate = un.Note;
+                    userRole = un.Role;
+                }
+                catch (Exception)
+                {
+                    return NotFound("No note assigned to the user was found with that ID");
+                }
             }
-            catch (Exception)
+            else
+                return BadRequest("Bad JWT claimes");
+            
+            if(userRole.Owner || userRole.Update)
             {
-                
-                return NotFound("Note not found");
+                noteToUpdate = _mapper.Map<NoteDto, Note>(note, noteToUpdate);
+                noteToUpdate.UpdatedAt = DateTime.UtcNow;
+
+                _context.Entry(noteToUpdate).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
+                return Ok(noteToUpdate);
             }
-
-            noteToUpdate = _mapper.Map<NoteDto, Note>(note, noteToUpdate);
-            noteToUpdate.UpdatedAt = DateTime.UtcNow;
-
-            _context.Entry(noteToUpdate).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return Ok(noteToUpdate);
+            else
+                return Unauthorized("Insufficient permissions to edit the note with the provided ID");
         }
 
         // POST: api/Note
         [HttpPost]
-        public async Task<ActionResult<Note>> PostNote(NoteDto note)
+        public async Task<ActionResult<Note>> PostNote(NoteDto noteDto)
         {
-            var noteToCreate = _mapper.Map<Note>(note);
-            noteToCreate.CreatedAt = DateTime.UtcNow;
-            noteToCreate.UpdatedAt = DateTime.UtcNow;
+            User owner;
+            var userId = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if(userId is not null)
+            {
+                try
+                {
+                    owner = await UserHelpers.GetByID(int.Parse(userId), _context);
+                }
+                catch (Exception)
+                {
+                    return NotFound("User not found");
+                }
+            }
+            else
+                return BadRequest("Bad JWT claimes");
             
-            _context.Notes.Add(noteToCreate);
-            await _context.SaveChangesAsync();
+            var noteToCreate = _mapper.Map<Note>(noteDto);
+            var actualTime = DateTime.UtcNow;
+            noteToCreate.CreatedAt = actualTime;
+            noteToCreate.UpdatedAt = actualTime;
+
+            var noteCreated = await NoteHelpers.Create(owner, noteToCreate, _context);
 
             return CreatedAtAction(nameof(GetNote), new { id = noteToCreate.Id }, noteToCreate);
         }
 
         // DELETE: api/Note/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteNote(int id)
+        [HttpDelete("{noteId}")]
+        public async Task<IActionResult> DeleteNote(int noteId)
         {
             Note noteToDelete;
-            try
+            Role userRole;
+            var userId = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if(userId is not null)
             {
-                noteToDelete = await NoteHelpers.GetByID(id, _context);
+                try{
+                    var un = await UserNoteHelpers.GetByUserIdAndNoteId(int.Parse(userId),noteId,_context);
+                    noteToDelete = un.Note;
+                    userRole = un.Role;
+                }
+                catch (Exception)
+                {
+                    return NotFound("No note assigned to the user was found with that ID");
+                }
             }
-            catch (Exception)
+            else
+                return BadRequest("Bad JWT claimes");
+            
+            if(userRole.Owner || userRole.Delete)
             {
-                return NotFound("Note not found");
+                var userNotes = _context.UserNotes.Where(un => un.NoteId == noteId);
+                _context.UserNotes.RemoveRange(userNotes);
+                
+                var noteRoles = _context.Roles.Where(r => r.NoteId == noteId);
+                _context.Roles.RemoveRange(noteRoles);
+
+                _context.Notes.Remove(noteToDelete);
+
+                await _context.SaveChangesAsync();
+
+                return Ok();
             }
-
-            _context.Notes.Remove(noteToDelete);
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            else
+                return Unauthorized("Insufficient permissions to delete the note with the provided ID");
         }
     }
 }

@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using NoteAppAPI.Dtos;
 using NoteAppAPI.Models;
 using NoteAppAPI.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace NoteAppAPI.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
@@ -66,19 +68,6 @@ namespace NoteAppAPI.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(userToUpdate);
-        }
-
-        // POST: api/User
-        [HttpPost]
-        public async Task<ActionResult<User>> PostUser(UserDto user)
-        {
-            var userToCreate = _mapper.Map<User>(user);
-            userToCreate.RegistrationDate = DateTime.UtcNow;
-
-            _context.Users.Add(userToCreate);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetUser), new { id = userToCreate.Id }, userToCreate);
         }
 
         // DELETE: api/User/{id}

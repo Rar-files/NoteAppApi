@@ -21,8 +21,13 @@ public static class UserHelpers {
     }
 
     //Check if user exists
-    public static bool Exists(int id, NoteAppDBContext _context)
+    public static bool ExistsByID(int id, NoteAppDBContext _context)
     {
         return (_context.Users?.Any(e => e.Id == id)).GetValueOrDefault();
+    }
+
+    public static bool ExistsByEmail(string email, NoteAppDBContext _context)
+    {
+        return (_context.Users?.Any(e => e.Email == email)).GetValueOrDefault();
     }
 }
