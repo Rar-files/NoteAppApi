@@ -62,27 +62,39 @@ namespace NoteAppAPI.Controllers
         }
 
         // PUT: api/Note/{id}
-        [HttpPut("{id}")]
-        public async Task<ActionResult<Note>> PutNote(int id, NoteDto note)
+        [HttpPut("{noteId}")]
+        public async Task<ActionResult<Note>> PutNote(int noteId, NoteDto note)
         {
             Note noteToUpdate;
-            try
+            Role userRole;
+            var userId = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if(userId is not null)
             {
-                noteToUpdate = await NoteHelpers.GetByID(id, _context);
+                try{
+                    var un = await UserNoteHelpers.GetByUserIdAndNoteId(int.Parse(userId),noteId,_context);
+                    noteToUpdate = un.Note;
+                    userRole = un.Role;
+                }
+                catch (Exception)
+                {
+                    return NotFound("No note assigned to the user was found with that ID");
+                }
             }
-            catch (Exception)
+            else
+                return BadRequest("Bad JWT claimes");
+            
+            if(userRole.Owner || userRole.Update)
             {
-                
-                return NotFound("Note not found");
+                noteToUpdate = _mapper.Map<NoteDto, Note>(note, noteToUpdate);
+                noteToUpdate.UpdatedAt = DateTime.UtcNow;
+
+                _context.Entry(noteToUpdate).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
+                return Ok(noteToUpdate);
             }
-
-            noteToUpdate = _mapper.Map<NoteDto, Note>(note, noteToUpdate);
-            noteToUpdate.UpdatedAt = DateTime.UtcNow;
-
-            _context.Entry(noteToUpdate).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return Ok(noteToUpdate);
+            else
+                return Unauthorized("Insufficient permissions to edit the note with the provided ID");
         }
 
         // POST: api/Note
