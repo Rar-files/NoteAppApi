@@ -5,6 +5,7 @@ using NoteAppAPI.Dtos;
 using AutoMapper;
 using NoteAppAPI.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace NoteAppAPI.Controllers
 {
@@ -27,12 +28,18 @@ namespace NoteAppAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Note>>> GetNotes()
         {
-            if (_context.Notes == null)
+            var userId = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if(userId is not null)
             {
-                return NotFound("Note not found");
+                return await (
+                    from un in _context.UserNotes
+                    where un.UserId == int.Parse(userId)
+                    join notes in _context.Notes on un.NoteId equals notes.Id
+                    select notes
+                ).ToListAsync();
             }
-
-            return await _context.Notes.ToListAsync();
+            else
+                return BadRequest("Bad JWT claimes");
         }
 
         // GET: api/Note/{id}
@@ -80,14 +87,20 @@ namespace NoteAppAPI.Controllers
         public async Task<ActionResult<Note>> PostNote(NoteDto noteDto)
         {
             User owner;
-            try
+            var userId = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if(userId is not null)
             {
-                owner = await UserHelpers.GetByID(noteDto.OwnerId, _context);
+                try
+                {
+                    owner = await UserHelpers.GetByID(int.Parse(userId), _context);
+                }
+                catch (Exception)
+                {
+                    return NotFound("User not found");
+                }
             }
-            catch (Exception)
-            {
-                return NotFound("User not found");
-            }
+            else
+                return BadRequest("Bad JWT claimes");
             
             var noteToCreate = _mapper.Map<Note>(noteDto);
             var actualTime = DateTime.UtcNow;

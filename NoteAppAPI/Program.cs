@@ -19,15 +19,33 @@ builder.Services.AddControllers();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer( o =>
     {
-        o.TokenValidationParameters = new TokenValidationParameters
+        var keyString = builder.Configuration["Auth:Jwt:Key"];
+        if(keyString != null)
+            o.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidIssuer = builder.Configuration["Auth:Jwt:Issuer"],
+                ValidAudience = builder.Configuration["Auth:Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString)),
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = false,
+                ValidateIssuerSigningKey = true
+            };
+        else
+            throw new NullReferenceException("Auth:Jwt:Key is not set in the configuration file");
+
+        o.Events = new JwtBearerEvents
         {
-            ValidIssuer = builder.Configuration["Auth:Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Auth:Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Auth:Jwt:Key"])),
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = false,
-            ValidateIssuerSigningKey = true
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && (path.StartsWithSegments("/api")))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 builder.Services.AddAuthorization();

@@ -1,19 +1,13 @@
-using System;
-using System.Net.Security;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using NoteAppAPI.Dtos;
 using NoteAppAPI.Helpers;
 using NoteAppAPI.Models;
-using Microsoft.AspNetCore.Http.Extensions;
 
 namespace NoteAppAPI.Controllers;
 
+[AllowAnonymous]
 [Route("api/[controller]")]
 [ApiController]
 public class AuthController : ControllerBase
@@ -28,10 +22,14 @@ public class AuthController : ControllerBase
         _config = config;
         _mapper = mapper;
     }
+    
+    public interface ILoginResponse
+    {
+        string Token { get; set; }
+    }
 
-    [AllowAnonymous]
     [HttpPost("Google")]
-    public async Task<IActionResult> LoginGoogle(OAuthDto oAuthDto)
+    public async Task<ActionResult<ILoginResponse>> LoginGoogle(OAuthDto oAuthDto)
     {
         if(oAuthDto == null)
             return BadRequest();
@@ -39,7 +37,7 @@ public class AuthController : ControllerBase
         try
         {
             var authedUser = await AuthHelpers.AuthenticateByGoogle(oAuthDto, _context);
-            return Ok(AuthHelpers.GenerateToken(authedUser,_config));
+            return Ok(new { Token = AuthHelpers.GenerateToken(authedUser,_config)});
         }
         catch (Exception e)
         {
@@ -47,9 +45,8 @@ public class AuthController : ControllerBase
         }
     }
 
-    [AllowAnonymous]
     [HttpPost("Local/Login")]
-    public async Task<IActionResult> LoginLocalLogin(UserDtoShorted userCred)
+    public async Task<ActionResult<ILoginResponse>> LoginLocalLogin(UserDtoShorted userCred)
     {
         if(userCred == null)
             return BadRequest();
@@ -57,7 +54,7 @@ public class AuthController : ControllerBase
         try
         {
             var authedUser = await AuthHelpers.AuthenticateByLocalAuth(userCred, _context);
-            return Ok(AuthHelpers.GenerateToken(authedUser,_config));
+            return Ok(new { Token = AuthHelpers.GenerateToken(authedUser,_config)});
         }
         catch (InvalidOperationException)
         {
@@ -75,7 +72,6 @@ public class AuthController : ControllerBase
         User User { get; set; }
     }
 
-    [AllowAnonymous]
     [HttpPost("Local/Signup")]
     public async Task<ActionResult<ILoginLocalSignupResponse>> LoginLocalSignup(UserDto userDto)
     {

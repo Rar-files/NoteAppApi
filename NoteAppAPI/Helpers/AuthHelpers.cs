@@ -10,11 +10,15 @@ using NoteAppAPI.Models;
 public class AuthHelpers {
     public static string GenerateToken(User user, IConfiguration _config) 
     {
+        var keyString = _config["Auth:Jwt:Key"];
+        if(keyString is not null)
+        {
         var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_config["Auth:Jwt:Key"]));
+            Encoding.UTF8.GetBytes(keyString));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var claims = new[] {
-            new Claim(ClaimTypes.NameIdentifier, user.Email)
+            new Claim(ClaimTypes.NameIdentifier, user.Email),
+            new Claim(ClaimTypes.Sid, user.Id.ToString())
         };
         var token = new JwtSecurityToken(
             _config["Auth:Jwt:Issuer"], 
@@ -24,6 +28,9 @@ public class AuthHelpers {
             signingCredentials: creds);
         
         return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        else
+            throw new NullReferenceException("Auth:Jwt:Key is not set in the configuration file");
     }
 
     public static async Task<User> AuthenticateByGoogle(OAuthDto oAuthDto, NoteAppDBContext _context){
