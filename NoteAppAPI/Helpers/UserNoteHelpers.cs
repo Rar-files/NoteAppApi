@@ -8,17 +8,37 @@ public static class UserNoteHelpers {
     {  
         if (_context.UserNotes == null)
         {
-            throw new Exception("Error retrieving user");
+            throw new Exception("Error retrieving user note");
         }
 
         var userNote = await _context.UserNotes
             .Include(u => u.User)
             .Include(n => n.Note)
-            .FirstOrDefaultAsync(u => u.Id == id);
+            .FirstAsync(un => un.Id == id);
 
         if (userNote == null)
         {
-            throw new Exception("Error retrieving user");
+            throw new Exception("Error retrieving user note");
+        }
+
+        return userNote;
+    }
+
+    public static async Task<UserNote> GetByUserIdAndNoteId(int userId, int noteId, NoteAppDBContext _context)
+    {  
+        if (_context.UserNotes == null)
+        {
+            throw new Exception("Error retrieving user note");
+        }
+
+        var userNote = await _context.UserNotes
+            .Include(u => u.User)
+            .Include(n => n.Note)
+            .FirstAsync(un => un.NoteId == noteId && un.UserId == userId);
+
+        if (userNote == null)
+        {
+            throw new Exception("Error retrieving user note");
         }
 
         return userNote;

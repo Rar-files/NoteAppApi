@@ -42,20 +42,23 @@ namespace NoteAppAPI.Controllers
                 return BadRequest("Bad JWT claimes");
         }
 
-        // GET: api/Note/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Note>> GetNote(int id)
+        // GET: api/Note/{noteId}
+        [HttpGet("{noteId}")]
+        public async Task<ActionResult<Note>> GetNote(int noteId)
         {
-            try
+            var userId = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if(userId is not null)
             {
-                var note = await NoteHelpers.GetByID(id, _context);
-                return note;
+                try{
+                    return (await UserNoteHelpers.GetByUserIdAndNoteId(int.Parse(userId),noteId,_context)).Note;
+                }
+                catch (Exception)
+                {
+                    return NotFound("No note assigned to the user was found with that ID");
+                }
             }
-            catch (Exception)
-            {
-                
-                return NotFound("Note not found");
-            }
+            else
+                return BadRequest("Bad JWT claimes");
         }
 
         // PUT: api/Note/{id}
