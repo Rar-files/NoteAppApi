@@ -95,14 +95,14 @@ builder.Services.AddSwaggerGen(config =>{
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+// if (app.Environment.IsDevelopment())
+// {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "NoteAppAPIv1");
     });
-}
+// }
 
 app.UseHttpsRedirection();
 
@@ -110,5 +110,13 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider
+        .GetRequiredService<NoteAppDBContext>();
+    
+    dbContext.Database.Migrate();
+}
 
 app.Run();
