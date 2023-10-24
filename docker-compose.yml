@@ -3,8 +3,6 @@ services:
   api:
     image: note-app-api
     container_name: note-app-api
-    build:
-      dockerfile: Dockerfile
     depends_on:
       db:
         condition: service_healthy
@@ -14,6 +12,8 @@ services:
   db:
     image: postgres:16
     container_name: note-app-db
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: NoteApp
       POSTGRES_USER: NoteApp0450

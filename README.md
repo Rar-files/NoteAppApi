@@ -5,21 +5,11 @@ Make sure Docker with Docker-compose is installed and running on your system bef
 
 ## Usage
 
-To run stack, execute:
+To manage stack, use "./service.sh" script.
+
+For help, execute:
 ```
-./service.sh --start
-```
-After changes in code, execute:
-```
-./service.sh --build
-```
-To stop stack, execute:
-```
-./service.sh --down
-```
-To clean after stack, execute:
-```
-./service.sh --clean
+./service.sh help
 ```
 
 ## Permissions

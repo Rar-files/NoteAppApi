@@ -1,32 +1,30 @@
 #!/bin/sh
 api_image_name=note-app-api
+isRebuild=false
 
-start() {
-    echo Backend stack starting...
-    docker-compose up -d
-    echo Backend stack started
+up() {
+    build
+    start
 }
 
 build() {
-    isStarted=false
-    if [ "$(docker ps -a | grep note-app-api | wc -l)" -gt 0 ]; then
-        isStarted=true
-        echo Backend stack is running.
-        down
-    fi
-
     if docker image inspect $api_image_name >/dev/null 2>&1; then
+
         echo API image exists.
-        clean
+        
+        if [ "$isRebuild" = false ]; then
+            echo Use -r or --rebuild to force rebuild.
+            return
+        fi       
+
+        rmi
     fi
 
     echo Build new API image...
+    cd app
     docker build -t note-app-api -f Dockerfile .
+    cd ..
     echo Image build successful.
-
-    if [ "$isStarted" = true ]; then
-        start
-    fi
 }
 
 down() {
@@ -35,40 +33,59 @@ down() {
     echo Backend stack stopped.
 }
 
-clean() {
+start() {
+    echo Backend stack starting...
+    docker-compose up -d
+    echo Backend stack started
+}
+
+rmi() {
+    if [ "$(docker ps -a | grep note-app-api | wc -l)" -gt 0 ]; then
+        echo Backend stack is running.
+        down
+    fi
+
     echo Removing old API image...
     docker rmi note-app-api
     echo Old API image removed.
 }
 
+clean() {
+    Echo "ATTENTION!: This command remove app image and DATABASE FILES"
+    Echo "Do you want to continue? (y/n)"
+    read -r answer
+    if [ "$answer" == "y" ]; then
+        rmi
+        rm -r ./postgres-data
+        echo All stack files removed.
+    else
+        echo Operation aborted.
+    fi
+}
+
 help() {
-    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Usage: $0 [COMMAND] [OPTIONS]"
+    echo ""
+    echo "Commands:"
+    echo " b, build             Build backend stack"
+    echo " c, clean             Remove stack files (ATTENTION!: This command remove app image and DATABASE FILES)"
+    echo " d, down              Stop and remove backend stack"
+    echo " h, help              Display this help message"
+    echo " rmi, remove-image    Remove old API image"
+    echo " u, up                Start backend stack"
+    echo ""
     echo "Options:"
-    echo " -b, --build   Start backend stack with rebuilding API image"
-    echo " -c, --clean   Remove old files"
-    echo " -d, --down      Stop and remove backend stack"
-    echo " -h, --help      Display this help message"
-    echo " -s, --start     Start backend stack"
+    echo " -r, --rebuild    Force to rebuild api image during up or build, if old image exist"
 }
 
 
 handle_options() {
-    while [ $# -gt 0 ]; do
-        case "$1" in
-            -b | --build)
-                build
-                ;;
-            -c | --clean)
-                clean
-                ;;
-            -s | --start)
-                start
-                ;;
-            -d | --down)
-                down
-                ;;
-            -h | --help)
-                help
+    first="$1"
+    while [ $# -gt 1 ]; do
+        case "$2" in
+            -r | --rebuild)
+                isRebuild=true
                 ;;
             *)
                 help
@@ -76,6 +93,30 @@ handle_options() {
         esac
         shift
     done
+
+    case "$first" in
+        b | build)
+            build
+            ;;
+        c | clean)
+            clean
+            ;;
+        u | up)
+            up
+            ;;
+        d | down)
+            down
+            ;;
+        rmi | remove-image)
+            rmi
+            ;;
+        h | help)
+            help
+            ;;
+        *)
+            help
+            ;;
+    esac
 }
 
 handle_options "$@"
