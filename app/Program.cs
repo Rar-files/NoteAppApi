@@ -19,7 +19,7 @@ builder.Services.AddControllers();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer( o =>
     {
-        var keyString = builder.Configuration["Auth:Jwt:Key"];
+        var keyString = builder.Configuration["Secrets:JWTKey"];
         if(keyString != null)
             o.TokenValidationParameters = new TokenValidationParameters
             {
@@ -32,7 +32,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 ValidateIssuerSigningKey = true
             };
         else
-            throw new NullReferenceException("Auth:Jwt:Key is not set in the configuration file");
+            throw new NullReferenceException("Secrets:JWTKey is not set in the configuration file");
 
         o.Events = new JwtBearerEvents
         {

@@ -21,15 +21,15 @@ namespace NoteAppAPI.Controllers
         }
 
         // GET: api/Role/Note/{id}
-        [HttpGet("Note/{id}", Name = "GetRolesByNote")]
-        public async Task<ActionResult<IEnumerable<Role>>> GetRolesByNote(int id)
+        [HttpGet("Note/{roleId}", Name = "GetRolesByNote")]
+        public async Task<ActionResult<IEnumerable<Role>>> GetRolesByNote(int roleId)
         {
             if (_context.Roles == null)
             {
                 return NotFound("Roles not found");
             }
 
-            return await _context.Roles.Where(r => r.NoteId == id)
+            return await _context.Roles.Where(r => r.NoteId == roleId)
             .Include(n => n.Note)
             .ToListAsync();
         }

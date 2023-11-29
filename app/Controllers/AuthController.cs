@@ -58,7 +58,7 @@ public class AuthController : ControllerBase
         }
         catch (InvalidOperationException)
         {
-            return BadRequest($"User not found, please sign up: {Request.Scheme}://{Request.Host}/api/Local/Signup");
+            return NotFound($"User not found, please sign up: {Request.Scheme}://{Request.Host}/api/Local/Signup");
         }
         catch (ArgumentException e)
         {
@@ -77,10 +77,6 @@ public class AuthController : ControllerBase
     {
         if(userDto == null)
             return BadRequest();
-        if(userDto.FirstName == null)
-            return BadRequest("First name is missing");
-        if(userDto.LastName == null)
-            return BadRequest("Last name is missing");
         if(UserHelpers.ExistsByEmail(userDto.Email, _context))
             return BadRequest("User with this email already exists");
 

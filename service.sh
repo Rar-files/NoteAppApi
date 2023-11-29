@@ -8,6 +8,19 @@ up() {
 }
 
 build() {
+    file=app/appsettings.local.json
+
+    if [ ! -e "$file" ] ; then
+        echo Generate local settings file with app secret...
+        key=$(head -c 32 /dev/random | base64)
+        echo "{
+    \"Secrets\": {
+        \"JWTKey\": \"$key\"
+    }
+}" > "$file"
+        echo "File \"$file\" with app secret generated."
+    fi
+
     if docker image inspect $api_image_name >/dev/null 2>&1; then
 
         echo API image exists.
@@ -51,8 +64,8 @@ rmi() {
 }
 
 clean() {
-    Echo "ATTENTION!: This command remove app image and DATABASE FILES"
-    Echo "Do you want to continue? (y/n)"
+    echo "ATTENTION!: This command remove app image and DATABASE FILES"
+    echo "Do you want to continue? (y/n)"
     read -r answer
     if [ "$answer" == "y" ]; then
         rmi

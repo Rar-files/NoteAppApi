@@ -10,7 +10,7 @@ using NoteAppAPI.Models;
 public class AuthHelpers {
     public static string GenerateToken(User user, IConfiguration _config) 
     {
-        var keyString = _config["Auth:Jwt:Key"];
+        var keyString = _config["Secrets:JWTKey"];
         if(keyString is not null)
         {
         var key = new SymmetricSecurityKey(
@@ -30,7 +30,7 @@ public class AuthHelpers {
         return new JwtSecurityTokenHandler().WriteToken(token);
         }
         else
-            throw new NullReferenceException("Auth:Jwt:Key is not set in the configuration file");
+            throw new NullReferenceException("Secrets:JWTKey is not set in the configuration file");
     }
 
     public static async Task<User> AuthenticateByGoogle(OAuthDto oAuthDto, NoteAppDBContext _context){

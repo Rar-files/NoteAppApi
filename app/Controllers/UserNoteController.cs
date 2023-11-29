@@ -34,12 +34,12 @@ public class UserNoteController : ControllerBase
             .ToListAsync();
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<UserNote>> GetUserNote(int id)
+    [HttpGet("{unId}")]
+    public async Task<ActionResult<UserNote>> GetUserNote(int unId)
     {
         try
         {
-            var userNote = await UserNoteHelpers.GetByID(id, _context);
+            var userNote = await UserNoteHelpers.GetByID(unId, _context);
             return userNote;
         }
         catch (Exception)
@@ -49,8 +49,8 @@ public class UserNoteController : ControllerBase
     }
 
     // PUT: api/UserNote/{id}
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutUserNote(int id, UserNoteDto userNoteDto)
+    [HttpPut("{unId}")]
+    public async Task<IActionResult> PutUserNote(int unId, UserNoteDto userNoteDto)
     {
         User user;
         try
@@ -75,7 +75,7 @@ public class UserNoteController : ControllerBase
         UserNote userNoteToUpdate;
         try
         {
-            userNoteToUpdate = await UserNoteHelpers.GetByID(id, _context);
+            userNoteToUpdate = await UserNoteHelpers.GetByID(unId, _context);
         }
         catch (Exception)
         {
@@ -136,13 +136,13 @@ public class UserNoteController : ControllerBase
 
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUserNote(int id)
+    [HttpDelete("{unId}")]
+    public async Task<IActionResult> DeleteUserNote(int unId)
     {
         UserNote userNoteToUpdate;
         try
         {
-            userNoteToUpdate = await UserNoteHelpers.GetByID(id, _context);
+            userNoteToUpdate = await UserNoteHelpers.GetByID(unId, _context);
         }
         catch (Exception)
         {

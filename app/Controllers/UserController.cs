@@ -34,12 +34,12 @@ namespace NoteAppAPI.Controllers
         }
 
         // GET: api/User/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        [HttpGet("{userId}")]
+        public async Task<ActionResult<User>> GetUser(int userId)
         {   
             try
             {
-                var user = await UserHelpers.GetByID(id, _context);
+                var user = await UserHelpers.GetByID(userId, _context);
                 return user;
             }
             catch (Exception)
@@ -49,13 +49,13 @@ namespace NoteAppAPI.Controllers
         }
 
         // PUT: api/User/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, UserDto user)
+        [HttpPut("{userId}")]
+        public async Task<IActionResult> PutUser(int userId, UserDto user)
         {
             User userToUpdate;
             try
             {
-                userToUpdate = await UserHelpers.GetByID(id, _context);
+                userToUpdate = await UserHelpers.GetByID(userId, _context);
             }
             catch (Exception)
             {
@@ -71,13 +71,13 @@ namespace NoteAppAPI.Controllers
         }
 
         // DELETE: api/User/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        [HttpDelete("{userId}")]
+        public async Task<IActionResult> DeleteUser(int userId)
         {
             User userToDelete;
             try
             {
-                userToDelete = await UserHelpers.GetByID(id, _context);
+                userToDelete = await UserHelpers.GetByID(userId, _context);
             }
             catch (Exception)
             {
