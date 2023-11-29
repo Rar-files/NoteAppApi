@@ -9,6 +9,9 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add configuration to the container:
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile("appsettings.local.json", optional: false, reloadOnChange: true);
 builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container:
