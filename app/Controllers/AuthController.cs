@@ -1,6 +1,8 @@
+using System.Security.Claims;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NoteAppAPI.Dtos;
 using NoteAppAPI.Helpers;
 using NoteAppAPI.Models;
@@ -28,25 +30,8 @@ public class AuthController : ControllerBase
         string Token { get; set; }
     }
 
-    [HttpPost("Google")]
-    public async Task<ActionResult<ILoginResponse>> LoginGoogle(OAuthDto oAuthDto)
-    {
-        if(oAuthDto == null)
-            return BadRequest();
-
-        try
-        {
-            var authedUser = await AuthHelpers.AuthenticateByGoogle(oAuthDto, _context);
-            return Ok(new { Token = AuthHelpers.GenerateToken(authedUser,_config)});
-        }
-        catch (Exception e)
-        {
-            return Unauthorized(e.Message);
-        }
-    }
-
     [HttpPost("Local/Login")]
-    public async Task<ActionResult<ILoginResponse>> LoginLocalLogin(UserDtoShorted userCred)
+    public async Task<ActionResult<ILoginResponse>> LoginLocalLogin(UserCredentialDtoShorted userCred)
     {
         if(userCred == null)
             return BadRequest();
@@ -73,22 +58,44 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("Local/Signup")]
-    public async Task<ActionResult<ILoginLocalSignupResponse>> LoginLocalSignup(UserDto userDto)
+    public async Task<ActionResult<ILoginLocalSignupResponse>> LoginLocalSignup(UserCredentialDto userCredentialDto)
     {
-        if(userDto == null)
+        if(userCredentialDto == null)
             return BadRequest();
-        if(UserHelpers.ExistsByEmail(userDto.Email, _context))
+        if(UserHelpers.ExistsByEmail(userCredentialDto.Email, _context))
             return BadRequest("User with this email already exists");
 
-        var userToCreate = _mapper.Map<User>(userDto);
-            userToCreate.RegistrationDate = DateTime.UtcNow;
+        var userCredential = await AuthHelpers.CreateUser(userCredentialDto, _context, _mapper);
 
-        _context.Users.Add(userToCreate);
+        var token = AuthHelpers.GenerateToken(userCredential.User,_config);
+
+        return CreatedAtAction(actionName: nameof(UserController.GetUser), controllerName: nameof(UserController)[0..^10], routeValues: new { id = userCredential.UserId }, value: new{ Token = token, User = userCredential.User });
+    }
+
+    [Authorize]
+    [HttpPut("Local/ChangePassword")]
+    public async Task<IActionResult> PutAuthUser(UserCredentialDtoShorted userCredential)
+    {
+        var authedUserId = User.FindFirst(ClaimTypes.Sid)?.Value;
+
+        if(authedUserId == null)
+            return StatusCode(418);
+            
+        UserCredential userCreditialToUpdate;
+        try
+        {
+            userCreditialToUpdate = await AuthHelpers.GetCreditialByID(int.Parse(authedUserId), _context);
+        }
+        catch (Exception)
+        {
+            return NotFound("User not found");
+        }
+
+        userCreditialToUpdate.Password = userCredential.Password;
+
+        _context.Entry(userCreditialToUpdate).State = EntityState.Modified;
         await _context.SaveChangesAsync();
 
-        var authedUser = await AuthHelpers.AuthenticateByLocalAuth(_mapper.Map<UserDtoShorted>(userToCreate), _context);
-        var token = AuthHelpers.GenerateToken(authedUser,_config);
-
-        return CreatedAtAction(actionName: nameof(UserController.GetUser), controllerName: nameof(UserController)[0..^10], routeValues: new { id = userToCreate.Id }, value: new{ Token = token, User = userToCreate });
+        return Ok();
     }
 }

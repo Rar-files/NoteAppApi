@@ -26,11 +26,7 @@ namespace NoteAppAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUser()
         {
-            if (_context.Users == null)
-            {
-                return NotFound("Users not found");
-            }
-            return await _context.Users.ToListAsync();
+            return Ok(await _context.Users.ToListAsync());
         }
 
         // GET: api/User/{id}
@@ -40,7 +36,7 @@ namespace NoteAppAPI.Controllers
             try
             {
                 var user = await UserHelpers.GetByID(userId, _context);
-                return user;
+                return Ok(user);
             }
             catch (Exception)
             {
@@ -50,7 +46,7 @@ namespace NoteAppAPI.Controllers
 
         // PUT: api/User/{id}
         [HttpPut("{userId}")]
-        public async Task<IActionResult> PutUser(int userId, UserDto user)
+        public async Task<ActionResult<User>> PutUser(int userId, UserDto user)
         {
             User userToUpdate;
             try

@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NoteAppAPI.Dtos;
@@ -33,38 +34,60 @@ public class AuthHelpers {
             throw new NullReferenceException("Secrets:JWTKey is not set in the configuration file");
     }
 
-    public static async Task<User> AuthenticateByGoogle(OAuthDto oAuthDto, NoteAppDBContext _context){
-        //TODO: OAuth authentication with Google
-        if(oAuthDto.AuthCredentials == "TempOAuthGoogleToken")
-        {
-            User user;
-            try
-            {
-                user = await UserHelpers.GetByID(1, _context);
-                return user;
-            }
-            catch (Exception)
-            {
-                throw new Exception("User not found");
-            }
-        }
-        throw new Exception("Invalid Google OAuth Token");
-    }
+    public static async Task<User> AuthenticateByLocalAuth(UserCredentialDtoShorted userCredential, NoteAppDBContext _context){
+        var currentUserCreditial = await _context.UserCredentials
+        .Include(uc => uc.User)
+        .FirstAsync(u => u.User.Email.ToLower() == userCredential.Email.ToLower());
 
-    public static async Task<User> AuthenticateByLocalAuth(UserDtoShorted user, NoteAppDBContext _context){
-        var currentUser = await _context.Users.FirstOrDefaultAsync(u => 
-        u.Email.ToLower() == user.Email.ToLower());
-
-        if(currentUser == null)
+        if(currentUserCreditial == null)
         {
             throw new InvalidOperationException();
         }
 
-        if(user.Password != currentUser.Password)
+        if(userCredential.Password != currentUserCreditial.Password)
         {
             throw new ArgumentException("Invalid password");
         }
 
-        return currentUser;
+        return currentUserCreditial.User;
+    }
+
+    
+    public static async Task<UserCredential> GetCreditialByID(int id, NoteAppDBContext _context)
+    {
+        if (_context.UserCredentials == null)
+        {
+            throw new Exception("Error retrieving user credential");
+        }
+
+        var userCredential = await _context.UserCredentials
+            .Include(uc => uc.User)
+            .FirstAsync(uc => uc.UserId == id);
+
+        if (userCredential == null)
+        {
+            throw new Exception("Error retrieving user credential");
+        }
+
+        return userCredential;
+    }
+
+    public static async Task<UserCredential> CreateUser(UserCredentialDto userCredentialDto, NoteAppDBContext _context, IMapper _mapper)
+    {
+        var userToCreate = _mapper.Map<User>(userCredentialDto);
+        userToCreate.RegistrationDate = DateTime.UtcNow;
+        await UserHelpers.Create(userToCreate, _context);
+        await _context.SaveChangesAsync();
+
+        var userCreditialToCreate = new UserCredential{
+            UserId = userToCreate.Id,
+            User = userToCreate,
+            Password = userCredentialDto.Password
+        };
+
+        _context.UserCredentials.Add(userCreditialToCreate);
+        await _context.SaveChangesAsync();
+        
+        return userCreditialToCreate;
     }
 }

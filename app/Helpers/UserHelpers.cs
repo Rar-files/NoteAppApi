@@ -4,7 +4,7 @@ namespace NoteAppAPI.Helpers;
 
 public static class UserHelpers {
     public static async Task<User> GetByID(int id, NoteAppDBContext _context)
-    {  
+    {
         if (_context.Users == null)
         {
             throw new Exception("Error retrieving user");
@@ -29,5 +29,13 @@ public static class UserHelpers {
     public static bool ExistsByEmail(string email, NoteAppDBContext _context)
     {
         return (_context.Users?.Any(e => e.Email == email)).GetValueOrDefault();
+    }
+
+    public static async Task<User> Create(User userToCreate, NoteAppDBContext _context)
+    {
+        _context.Users.Add(userToCreate);
+        await _context.SaveChangesAsync();
+        
+        return userToCreate;
     }
 }
