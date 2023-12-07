@@ -25,13 +25,13 @@ public class AuthController : ControllerBase
         _mapper = mapper;
     }
     
-    public interface ILoginResponse
+    public interface ILocalResponse
     {
         string Token { get; set; }
     }
 
     [HttpPost("Local/Login")]
-    public async Task<ActionResult<ILoginResponse>> LoginLocalLogin(UserCredentialDtoShorted userCred)
+    public async Task<ActionResult<ILocalResponse>> LoginLocalLogin(UserCredentialDtoShorted userCred)
     {
         if(userCred == null)
             return BadRequest();
@@ -51,14 +51,8 @@ public class AuthController : ControllerBase
         }
     }
 
-    public interface ILoginLocalSignupResponse
-    {
-        string Token { get; set; }
-        User User { get; set; }
-    }
-
     [HttpPost("Local/Signup")]
-    public async Task<ActionResult<ILoginLocalSignupResponse>> LoginLocalSignup(UserCredentialDto userCredentialDto)
+    public async Task<ActionResult<ILocalResponse>> LoginLocalSignup(UserCredentialDto userCredentialDto)
     {
         if(userCredentialDto == null)
             return BadRequest();
@@ -69,7 +63,7 @@ public class AuthController : ControllerBase
 
         var token = AuthHelpers.GenerateToken(userCredential.User,_config);
 
-        return CreatedAtAction(actionName: nameof(UserController.GetUser), controllerName: nameof(UserController)[0..^10], routeValues: new { id = userCredential.UserId }, value: new{ Token = token, User = userCredential.User });
+        return CreatedAtAction(actionName: nameof(UserController.GetUser), controllerName: nameof(UserController)[0..^10], routeValues: new { id = userCredential.UserId }, value: new{ Token = token});
     }
 
     [Authorize]

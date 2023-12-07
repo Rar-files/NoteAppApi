@@ -5,6 +5,7 @@ using NoteAppAPI.Dtos;
 using NoteAppAPI.Models;
 using NoteAppAPI.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace NoteAppAPI.Controllers
 {
@@ -36,6 +37,26 @@ namespace NoteAppAPI.Controllers
             try
             {
                 var user = await UserHelpers.GetByID(userId, _context);
+                return Ok(user);
+            }
+            catch (Exception)
+            {
+                return NotFound("User not found");
+            }
+        }
+
+        // GET: api/User/Me
+        [HttpGet("Me")]
+        public async Task<ActionResult<User>> GetMe()
+        {   
+            var userId = User.FindFirst(ClaimTypes.Sid)?.Value;
+
+            if(userId is not string || userId == "")
+                return NotFound("User not found");
+
+            try
+            {
+                var user = await UserHelpers.GetByID(int.Parse(userId), _context);
                 return Ok(user);
             }
             catch (Exception)
